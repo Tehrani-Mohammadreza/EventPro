@@ -1,0 +1,149 @@
+﻿@page "/edit-event/{id:int}"
+@inject EventService EventService
+@inject NavigationManager NavigationManager
+
+@* Add some styling for consistency with the Create Event page *@
+<style>
+    .form-container {
+        max-width: 600px;
+        margin: auto;
+        background-color: #f8f9fa;
+        padding: 30px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+        .form-container h3 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+        .form-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+            .form-group input:focus,
+            .form-group textarea:focus {
+                border-color: #007bff;
+                outline: none;
+            }
+
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+    .submit-button {
+        display: block;
+        width: 100%;
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+        .submit-button:hover {
+            background-color: #218838;
+        }
+
+    .error-message {
+        color: red;
+        text-align: center;
+        margin-top: 20px;
+    }
+</style>
+
+<div class="form-container">
+    <h3>Edit Event</h3>
+
+    @* Show error message if any *@
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="error-message">@errorMessage</div>
+    }
+
+    @* Display loading message if the event is not loaded yet *@
+    @if (existingEvent == null)
+    {
+        <p>Loading...</p>
+    }
+    else
+    {
+        <EditForm Model="@existingEvent" OnValidSubmit="UpdateEvent">
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label for="name">Event Name</label>
+                <input id="name" @bind="existingEvent.Name" placeholder="Event Name" required />
+            </div>
+            <div class="form-group">
+                <label for="description">Description</label>
+                <textarea id="description" @bind="existingEvent.Description" placeholder="Description" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input id="date" @bind="existingEvent.Date" type="datetime-local" required />
+            </div>
+            <div class="form-group">
+                <label for="location">Location</label>
+                <input id="location" @bind="existingEvent.Location" placeholder="Location" required />
+            </div>
+
+            <button type="submit" class="submit-button">Update Event</button>
+        </EditForm>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Event existingEvent;
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            existingEvent = await EventService.GetEventAsync(Id);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading event: {ex.Message}";
+        }
+    }
+
+    private async Task UpdateEvent()
+    {
+        try
+        {
+            await EventService.UpdateEventAsync(existingEvent);
+            NavigationManager.NavigateTo("/events");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error updating event: {ex.Message}";
+        }
+    }
+}

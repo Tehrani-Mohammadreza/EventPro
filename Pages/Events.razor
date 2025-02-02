@@ -1,0 +1,114 @@
+﻿@page "/events"
+@inject EventService EventService
+@inject NavigationManager NavigationManager
+
+@* Add some styling to make the page visually appealing *@
+<style>
+    .event-list {
+        list-style-type: none;
+        padding: 0;
+        margin: 0;
+        max-width: 600px;
+        margin: auto;
+    }
+
+    .event-item {
+        background-color: #f8f9fa;
+        padding: 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .event-item button {
+        background-color: #007bff;
+        color: white;
+        border: none;
+        padding: 8px 12px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .event-item button:hover {
+        background-color: #0056b3;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .create-button {
+        display: block;
+        width: 200px;
+        margin: 20px auto;
+        padding: 10px 20px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        text-align: center;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .create-button:hover {
+        background-color: #218838;
+    }
+</style>
+
+<h3 class="header">Events</h3>
+
+<ul class="event-list">
+    @foreach (var ev in events)
+    {
+        <li class="event-item">
+            <span>@ev.Name - @ev.Date.ToString("MMMM dd, yyyy")</span>
+            <div>
+                <button @onclick="() => EditEvent(ev.Id)">Edit</button>
+                <button @onclick="() => DeleteEvent(ev.Id)">Delete</button>
+            </div>
+        </li>
+    }
+</ul>
+
+<button class="create-button" @onclick="CreateNewEvent">Create New Event</button>
+
+@code {
+    private List<Event> events = new List<Event>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        events = await EventService.GetEventsAsync();
+    }
+
+    private void CreateNewEvent()
+    {
+        // Redirect to the Create Event page
+        NavigationManager.NavigateTo("/create-event");
+    }
+
+    private void EditEvent(int id)
+    {
+        // Redirect to the Edit Event page with the event id
+        NavigationManager.NavigateTo($"/edit-event/{id}");
+    }
+
+    private async Task DeleteEvent(int id)
+    {
+        try
+        {
+            await EventService.DeleteEventAsync(id);
+            events = await EventService.GetEventsAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle the error (e.g., show a message to the user)
+            Console.WriteLine($"Error deleting event: {ex.Message}");
+        }
+    }
+}
