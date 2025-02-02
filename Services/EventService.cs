@@ -8,38 +8,41 @@ public class EventService
 {
     private ConcurrentDictionary<int, Event> _events = new ConcurrentDictionary<int, Event>();
     private int _currentId = 1;
+    private readonly object _idLock = new object();
 
-    public Task<List<Event>> GetEventsAsync()
+    public ValueTask<List<Event>> GetEventsAsync()
     {
-        return Task.FromResult(_events.Values.ToList());
+        return new ValueTask<List<Event>>(_events.Values.ToList());
     }
 
-    public Task<Event> GetEventAsync(int id)
+    public ValueTask<Event> GetEventAsync(int id)
     {
         _events.TryGetValue(id, out var ev);
-        return Task.FromResult(ev);
+        return new ValueTask<Event>(ev);
     }
 
-    public Task AddEventAsync(Event newEvent)
+    public ValueTask AddEventAsync(Event newEvent)
     {
-        newEvent.Id = _currentId++;
+        lock (_idLock)
+        {
+            newEvent.Id = _currentId++;
+        }
         _events[newEvent.Id] = newEvent;
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task UpdateEventAsync(Event updatedEvent)
+    public ValueTask UpdateEventAsync(Event updatedEvent)
     {
         if (_events.ContainsKey(updatedEvent.Id))
         {
             _events[updatedEvent.Id] = updatedEvent;
         }
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 
-    public Task DeleteEventAsync(int id)
+    public ValueTask DeleteEventAsync(int id)
     {
         _events.TryRemove(id, out _);
-        return Task.CompletedTask;
+        return ValueTask.CompletedTask;
     }
 }
-
